@@ -1,16 +1,33 @@
 'use strict';
 
-module.exports.hello = (event, context, callback) => {
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Go Serverless v1.0! Your function executed successfully!',
-      input: event,
-    }),
-  };
+const axios = require('axios');
 
-  callback(null, response);
+module.exports.hello = (evt, ctx, cb) => {
 
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
+  axios.post('https://kapi.kakao.com/v1/payment/ready', [
+    'cid=TC0ONETIME',
+    'partner_order_id=partner_order_id',
+    'partner_user_id=partner_user_id',
+    'item_name=초코파이',
+    'quantity=1',
+    'total_amount=2200',
+    'vat_amount=200',
+    'tax_free_amount=0',
+    'approval_url=http://example.com',
+    'fail_url=http://example.com',
+    'cancel_url=http://example.com'
+  ].join('&'), {
+    headers: {
+      'Authorization': 'KakaoAK 441c20750456791d9388c24f8b438b78',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  })
+    .then(req => {
+      const response = {
+        statusCode: 200,
+        body: JSON.stringify(req.data),
+      };
+    
+      cb(null, response);
+    });
 };

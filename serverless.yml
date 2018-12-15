@@ -12,3 +12,7 @@ region: ap-northeast-2
 functions:
   hello:
     handler: handler.hello
+    events:
+      - http:
+          path: /
+          method: get
