@@ -1,0 +1,12 @@
+{
+  "name": "serverless-boilerplate",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Gumball12/boilerplate-serverless",
+  "author": "Gumball12 <kan02134@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "serverless-offline": "^3.31.3"
+  }
+}
