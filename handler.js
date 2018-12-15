@@ -23,20 +23,23 @@ module.exports.hello = (evt, ctx, cb) => {
     }
   })
     .then(req => {
-      /*
       const response = {
         statusCode: 301,
         headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           Location: req.data.next_redirect_pc_url
         },
         body: ''
       };
-      */
 
+      /*
       const response = {
         statusCode: 200,
         body: JSON.stringify(req.data)
       };
+      */
     
       cb(null, response);
     });
