@@ -23,12 +23,19 @@ module.exports.hello = (evt, ctx, cb) => {
     }
   })
     .then(req => {
+      /*
       const response = {
         statusCode: 301,
         headers: {
           Location: req.data.next_redirect_pc_url
         },
         body: ''
+      };
+      */
+
+      const response = {
+        statusCode: 200,
+        body: JSON.stringify(req.data)
       };
     
       cb(null, response);
