@@ -1,8 +1,7 @@
 {
-  "name": "serverless-boilerplate",
+  "name": "kakao-payment-test",
   "version": "1.0.0",
-  "main": "index.js",
-  "repository": "https://github.com/Gumball12/boilerplate-serverless",
+  "repository": "https://github.com/Gumball12/kakao-payment-test.git",
   "author": "Gumball12 <kan02134@gmail.com>",
   "license": "MIT",
   "private": true,
