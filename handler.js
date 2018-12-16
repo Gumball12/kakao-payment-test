@@ -33,13 +33,6 @@ module.exports.hello = (evt, ctx, cb) => {
         },
         body: ''
       };
-
-      /*
-      const response = {
-        statusCode: 200,
-        body: JSON.stringify(req.data)
-      };
-      */
     
       cb(null, response);
     });
