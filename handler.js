@@ -18,10 +18,12 @@ module.exports.payment = async () => {
     'cancel_url=http://example.com'
   ].join('&'), {
     headers: {
-      'Authorization': 'KakaoAK 441c20750456791d9388c24f8b438b78',
+      'Authorization': 'KakaoAK xxxxxxxxxx',
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   });
+
+  const pc_url = req.data.next_redirect_pc_url;
 
   const response = {
     statusCode: 301,
@@ -29,7 +31,7 @@ module.exports.payment = async () => {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0',
-      Location: req.data.next_redirect_pc_url
+      Location: pc_url
     },
     body: ''
   };
