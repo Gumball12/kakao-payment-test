@@ -1,0 +1,18 @@
+service: kakao-payment-test
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+plugins:
+  - serverless-offline
+
+region: ap-northeast-2
+
+functions:
+  payment:
+    handler: handler.payment
+    events:
+      - http:
+          path: /
+          method: get
