@@ -1,27 +1,29 @@
-# Serverless AWS를 이용해 FaaS로 구현한 카카오 테스트 결제 모듈
+# Serverless AWS를 이용해 FaaS로 구현한 카카오 테스트 결제 서비스
 ![what-is-function-as-a-service-serverless-architectures](https://stackify.com/wp-content/uploads/2017/05/what-is-function-as-a-service-serverless-architectures-are-here-11196.png)
 
-Function as a Service의 약자인 FaaS는... 간단히 설명하자면 직접 서버를 구현해야 했거나(IaaS, Infrastructure as a Service), 적어도 애플리케이션을 직접 구현해야 했던(PaaS, Platform as a Service) 기존의 방식에서 탈피해 __정말 필요한 기능에 대해서만__ 개발할 수 있도록 하는 클라우드 컴퓨팅 서비스의 종류이다. 이 덕분에 적은 비용으로 빠르게 최신 애플리케이션을 빌드할 수 있게 된다.
+'서버리스 아키텍쳐' 라는 말이 있다. 서버가 없다는 의미가 아니라... 서버리스 아키텍쳐를 서비스해주는 기업에서 서버에 대해 알아서 프로비저닝 또는 유지보수를 해 주기 때문에, __서버에 대해 더 이상 신경쓰지 않아도 된다__ 는 의미로 받아들이면 된다.
 
-개발자는 클라우드에 어떠한 함수를 업로드하고, 필요 시 또는 특정 이벤트가 발생했을 때만 해당 함수를 실행하며, 함수가 실행된 횟수만큼 비용을 내는 방식이다.
+좀 더 자세히 설명하자면... 서버 자체를 구현해야 했거나(IaaS, Infrastructure as a Service), 적어도 애플리케이션을 구현해야 했던(PaaS, Platform as a Service) 기존의 방식에서 탈피해 __정말 필요한 기능에 대해서만__ 개발할 수 있도록 하는 [클라우드 컴퓨팅 서비스](https://ko.wikipedia.org/wiki/%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C_%EC%BB%B4%ED%93%A8%ED%8C%85)의 종류라고 할 수 있다.
 
-이는 '서버리스 아키텍쳐'라고도 하는데, 서버가 없다는 의미가 아니라... 서버리스 아키텍처 서비스를 제공하는 기업에서 알아서 프로비저닝하거나 유지보수를 해 주기 때문에, 서버에 대해 더 이상 신경 쓸 필요가 없다는 의미로 받아들이면 된다.
+이러한 서버리스 아키텍쳐를 이용해 개발을 진행하게 되면, 적은 비용으로도 아주 빠르게 최신 애플리케이션을 빌드할 수 있게 된다.
 
-이러한 FaaS는 대다수의 공룡 기업들(MS, AWS, Google...)에서 제공하며, 우리는 이들 중 AWS의 Lambda를 이용해 Serverless architecture로 구현해보도록 하겠다.
+서버리스 아키텍쳐는 서버에 대한 것들(DB, 계정 등...)을 API로 제공해주는 BaaS(Backend as a Service)와 특정 이벤트에 대해 함수를 실행하는 FaaS(Function as a Service)로 나눌 수 있는데, 우리는 이 _FaaS_ 에 대해 진행하도록 하겠다.
+
+FaaS의 동작 방식은 정말 간단하다. 개발자가 클라우드에 어떠한 함수를 업로드하고, 특정 이벤트가 발생했을 때에만 해당 함수를 실행하며, 함수가 실행된 횟수만큼 비용을 내는 방식이다.
+
+이 FaaS는 대다수의 공룡 기업들(MS, AWS, Google...)에서 제공하며, 우리는 이들 중 AWS의 Lambda를 이용해 서버리스 아키텍쳐를 간단히 구현해보고, 아래에서 카카오톡 테스트 결제 모듈을 서버리스 아키텍쳐로 구현해보도록 하겠다.
 
 ## AWS Serverless
 ![AWS serverless for microservices](./assets/imgs/AWS-serverless-for-microservices.png)
 
-대표적인 FaaS 서비스인 AWS Lambda를 이용해 구현할 것이다. AWS Lambda에 함수를 업로드하고, 이를 호출하는 방식이다.
-
-우리는 RESTfule API를 통해 AWS Lambda의 함수를 호출할 계획인데, 이는 AWS API Gateway를 통해 구현할 수 있다.
+AWS는 Lambda와 API Gateway를 통해 서버리스 아키텍쳐를 구현할 수 있도록 하고 있다.
 
 ### AWS Lambda
 ![AWS Lambda](https://d1.awsstatic.com/Digital%20Marketing/House/PAC/2up/PAC-Q4_House-Ads_Lambda_2up.62dc7e19b7b2e0a2c06821594c31f1ce00a6bdda.png)
 
 어떠한 이벤트에 대해 코드를 실행하고, 그 값을 응답으로 반환하거나 컴퓨팅 리소스를 관리하는 [AWS serverless computing](https://aws.amazon.com/ko/serverless/) 서비스이다.
 
-간단히 말하자면 Lambda에 어떠한 함수를 작성(또는 업로드)한 뒤, API Gateway와 같은 서비스를 이용해 이벤트에 연결한다. 이후 이벤트가 트리깅되는 즉시 해당 함수를 실행하는 것.
+간단히 말하자면 Lambda에 어떠한 함수를 작성(또는 업로드)한 뒤, API Gateway와 같은 서비스를 이용해 이벤트에 연결한다. 이후 이벤트가 트리거되는 즉시 해당 함수를 실행하는 것.
 
 주의할 것은 Lambda가 어떠한 상태를 저장하는 것은 아니기 때문에, 정보를 저장하기 위해서는 AWS DynamoDB와 같은 타 서비스를 Lambda에 연결해 사용해야 한다. 이렇게 Lambda는 AWS의 다른 서비스들과도 연결할 수 있다. 다만 이는 글의 주제와 맞지 않기 때문에, 더 알고 싶다면 [AWS Lambda 개발자 안내서](https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/use-cases.html)를 참고하도록 한다.
 
@@ -33,12 +35,12 @@ Function as a Service의 약자인 FaaS는... 간단히 설명하자면 직접 �
 다음과 같은 HTTP 요청만으로도 Lambda를 실행할 수 있다는 말.
 
 ```sh
-$ curl -X GET https://my-api-gateway-endpoint.com/
+$ curl -X GET https://my-lambda-api-gateway-endpoint.com/
 
 # 요청에 대한 응답으로 Lambda에서 실행된 함수의 값을 반환받을 수 있다.
 ```
 
-좋다. 거의 완벽하고 좋다. 중요한 것은 이러한 서비스들을 어떻게 사용할 수 있냐는 말이다.
+이러한 서비스들을 어떻게 사용할 수 있을까. 이를 위해서는 좀 까다로운? 지식들이 선행되어야 한다.
 
 여기서 _Serverless Framework_ 가 나온다.
 
@@ -47,13 +49,13 @@ $ curl -X GET https://my-api-gateway-endpoint.com/
 
 Serverless는 위와 같은 서버리스 아키텍쳐를 배포하고 운영하기 위한 [프레임워크](https://en.wikipedia.org/wiki/Software_framework)이다.
 
-Serverless를 사용함으로써 아주 쉽고 간편하게 AWS Serverless architecture를 구현할 수 있다. 먼저 설치부터 시작해 하나하나 진행해보도록 하자.
+Serverless를 사용함으로써 아주 쉽고 간편하게 AWS 서버리스 아키텍쳐인를 구현할 수 있다. 먼저 설치부터 시작해 하나하나 진행해보도록 하자.
 
 ### Quick start
-Serverless를 설치하는 것 부터 시작해, __"Hello!"__ 를 반환하는 서비스를 만들어보도록 하겠다.
+Serverless를 설치하는 것 부터 시작해, `Hello!` 를 반환하는 서비스를 만들어보도록 하겠다.
 
 #### 0. npm 설치
-Serverless는 JS로 작성된 Node.js 런타임 환경에서 제공되는 프레임워크이기 때문에, NPM(Node Package Manager)을 통해 설치해야 한다. 만약 npm이 설치되어 있지 않다면 [이 링크](https://www.npmjs.com/get-npm)를 통해 설치를 먼저 진행하도록 하자.
+Serverless는 Node.js 런타임 환경에서 제공되는 프레임워크이기 때문에, NPM(Node Package Manager)을 통해 설치해야 한다. 만약 npm이 설치되어 있지 않다면 [이 링크](https://www.npmjs.com/get-npm)를 통해 설치를 먼저 진행하도록 하자.
 
 설치를 마쳤으면 다음의 명령이 정상적으로 실행될 것이다.
 
@@ -76,7 +78,7 @@ npm 설치를 마쳤다면, 다음 순서대로 serverless를 설치해보도록
 $ npm install -g serverless
 ```
 
-이 명령은 global하게 serverless를 설치한다는 것을 의미한다. 이 명령을 통해 다음과 같이 커맨드 창에서 해당 모듈로 접근할 수 있게 된다. (참고: [SO - what does the “-g” flag do in the command “npm install -g <something>”?](https://stackoverflow.com/a/13167605))
+이 명령은 global하게 serverless를 설치한다는 것을 의미한다. 이 명령을 통해 다음과 같이 커맨드 창에서 해당 모듈로 접근할 수 있게 된다. ([SO - what does the “-g” flag do in the command “npm install -g <something>”?](https://stackoverflow.com/a/13167605))
 
 ```sh
 $ serverless create --template aws-nodejs --path my-service
@@ -144,6 +146,8 @@ $ serverless config credentials --provider aws --key xxxxxxxxxx --secret xxxxxxx
 
 ```sh
 $ serverless create --template aws-nodejs --path quick-start
+
+$ cd quick-start
 ```
 
 이 명령은 Node.js 런타임 환경에서 개발을 진행할 것이며, AWS의 서버리스 아키텍쳐 서비스를 이용할 것임을 의미한다. 참고로 명령을 입력하기 전에 프로젝트 이름인 `quick-start` 라는 이름의 폴더는 없어야만 한다.
@@ -159,7 +163,7 @@ $ serverless create --template aws-nodejs --path quick-start
 
 ![serverless create project init files](./assets/imgs/serverless-create-project-init-files.jpg)
 
-각각 다음과 같다. (`.gitignore`은 git 관련 파일이다.)
+각각 다음과 같다. ([`.gitignore`은 git 관련 파일](https://git-scm.com/docs/gitignore))
 
 ##### `serverless.yml`
 서비스의 모든 설정들이 들어있는 파일이다. 내용은 다음과 같다.
@@ -178,14 +182,14 @@ functions: # function lists
     handler: handler.hello # handler function (<file name.function>)
 ```
 
-* __service__: 서비스의 이름
-* __provider__: 서버리스 아키텍쳐 서비스 제공 업체와 런타임 환경 정의
-* __funcitons__: 서비스의 모든 함수들에 대한 리스트
+* _service_: 서비스의 이름
+* _provider_: 서버리스 아키텍쳐 서비스 제공 업체와 런타임 환경 정의
+* _funcitons_: 서비스의 모든 함수들에 대한 리스트
 
-_function_ 프로퍼티 아래에는 구분을 위한 이름과 요청을 핸들링할 함수가 명시되어있으며, 아래에서 이 곳에 _events_ 프로퍼티를 추가해 트리거를 등록하도록 하겠다.
+_functions_ 프로퍼티 아래에는 구분을 위한 이름과 요청을 핸들링할 함수가 명시되어있으며, 이 곳에 _events_ 프로퍼티를 추가해 이벤트를 등록할 수 있다.
 
 ##### `handler.js`
-파일을 열어보면 다음과 같다. Lmabda 부분에 해당되는 함수라고 생각하면 된다.
+파일을 열어보면 다음과 같다. Lambda 부분에 해당되는 함수라고 생각하면 된다.
 
 ```js
 // handler.js
@@ -206,14 +210,14 @@ module.exports.hello = async (event, context) => {
 * _event_: 헤더 등의 정보
 * _context_: 실행되는 함수 등의 정보
 
-`serverless.yml`의 _funciton_ 프로퍼티에 설정했던 핸들러 함수인 `handler.js` 파일의 _hello_ 함수이다. 즉, 요청이 들어오면 이 함수가 실행된다는 것. 트리거 등록은 아래에서 진행하도록 하겠다.
+`serverless.yml`의 _funcitons_ 프로퍼티에 설정했던 핸들러 함수인 `handler.js` 파일의 _hello_ 함수이다. 즉, 요청이 들어오면 이 함수가 실행된다는 것. (이벤트 등록은 아래에서 진행하도록 하겠다.)
 
 반환되는 각각의 요소는 다음의 의미를 갖는다.
 
 * _statusCode_: HTTP status code
 * _body_: response body
 
-여기서 우리는 _"Hello!"_ 를 반환하는 서비스를 만들기로 했으니, 다음과 같이 _body_ 를 구성하여야 할 것 이다.
+여기서 우리는 `Hello!` 를 반환하는 서비스를 만들기로 했으니, 다음과 같이 _body_ 를 구성하여야 할 것 이다.
 
 ```js
 return {
@@ -235,7 +239,7 @@ module.exports.hello = (event, context, callback) => {
 
 물론 원한다면 callback 패턴을 사용할 수도 있지만, [코드의 가독성과 간결함을 위해 promise 패턴을 사용할 수 있도록 하자.](https://medium.com/@pitzcarraldo/callback-hell-%EA%B3%BC-promise-pattern-471976ffd139)
 
-아무튼 핸들러 함수는 모든 준비를 마쳤다. 남은 건 이제 이 함수에 대한 트리거를 등록하는 것 뿐이다.
+아무튼 핸들러 함수는 모든 준비를 마쳤다. 남은 건 이제 이 함수에 대한 이벤트를 등록하는 것 뿐이다.
 
 이는 `serverless.yml` 에 다음과 같이 _events_ 프로퍼티를 추가함으로써 가능하다.
 
@@ -257,9 +261,9 @@ functions:
           method: get
 ```
 
-보면 대략 알 수도 있을텐데, '/' 위치에 'GET' HTTP에 대한 요청을 `handler.js` 파일의 _hello_ 함수에서 핸들링한다는 의미이다.
+보면 대략 알 수도 있을텐데, '/' 위치에 'GET' HTTP에 대한 요청을 `handler.js` 파일의 _hello_ 함수에서 핸들링하겠다는 의미이다.
 
-API Gateway에 대한 부분이라고 생각하면 되겠다. 여기서 받아들일 요청을 정의하고, 해당 요청이 들어오면 연결된 핸들러 함수를 실행하는 것이다.
+API Gateway에 대한 부분이라고 생각하면 된다. 여기서 받아들일 요청을 정의하고, 해당 요청이 들어오면 연결된 핸들러 함수를 실행하는 것이다.
 
 #### 6. AWS에 업로드
 모든 설정을 마쳤다면 이제 남은 건 AWS에 업로드 하는 것 뿐이다. 다음 명령 하나로 가능하다.
@@ -279,7 +283,7 @@ $ serverless deploy -v
 ### Relieving the pain
 그러나 매번 핸들러 함수를 변경할 때 마다 deploying 할 수는 없을 것이다. 이는 [serverless offline](https://github.com/dherault/serverless-offline) 플러그인을 통해 해결할 수 있다.
 
-설치는 다음과 같다. 참고로 npm 말고 좀 더 효율적인 yarn을 사용할 수도 있지만, 이는 글의 주제에서 벗어난다고 생각되어 그냥 위에서도 사용했던 npm으로 설치를 진행하도록 하겠다. ([Yarn: 처음 보는 자바스크립트의 새 패키지 매니저](https://www.vobour.com/yarn-%EC%B2%98%EC%9D%8C-%EB%B3%B4%EB%8A%94-%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8%EC%9D%98-%EC%83%88-%ED%8C%A8%ED%82%A4%EC%A7%80-%EB%A7%A4%EB%8B%88%EC%A0%80-yarn-fir) 참고)
+설치는 다음과 같다. 참고로 npm 말고 좀 더 효율적인 [yarn](https://www.vobour.com/yarn-%EC%B2%98%EC%9D%8C-%EB%B3%B4%EB%8A%94-%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8%EC%9D%98-%EC%83%88-%ED%8C%A8%ED%82%A4%EC%A7%80-%EB%A7%A4%EB%8B%88%EC%A0%80-yarn-fir)을 사용할 수도 있지만, 이는 글의 주제에서 벗어난다고 생각되어 그냥 위에서도 사용했던 npm으로 설치를 진행하도록 하겠다.
 
 #### 1. init npm
 해당 프로젝트 폴더(위의 예제에서는 `quick-start` 폴더가 될 것이다.)로 들어간 뒤 다음의 명령으로 _npm_ 사용을 위한 초기화를 진행하자.
@@ -288,7 +292,7 @@ $ serverless deploy -v
 $ npm init
 ```
 
-명령 입력 시 프로젝트에 대한 정보를 입력해야 한다. 이는 [여기에 잘 정리되어 있으니](http://visualize.tistory.com/473), 참고하도록 한다.
+명령 입력 시 프로젝트에 대한 정보를 입력해야 한다. 이는 [여기에 잘 정리되어 있으니](http://visualize.tistory.com/473) 참고하도록 한다.
 
 #### 2. install serverless-offline
 다음으로 _serverless-offline_ 모듈을 설치한다.
@@ -297,7 +301,7 @@ $ npm init
 $ npm install serverless-offline --save-dev
 ```
 
-_--save-dev_ 옵션은 개발 시에만 사용되는 모듈임을 명시한다. 이 옵션으로 실제 deploying 시에는 해당 모듈이 포함되지 않아 좀 더 가벼운 서비스로 만들 수 있다.
+_--save-dev_ 옵션은 개발 시에만 사용되는 모듈임을 명시한다. 이 옵션을 사용하면 build 시에는 해당 모듈이 포함되지 않아 좀 더 가벼운 서비스를 만들 수 있다. ([SO - What is the difference between --save and --save-dev?](https://stackoverflow.com/a/42206389))
 
 #### 3. Serverless configuration
 다음으로 `serverless.yml`에 해당 모듈을 플러그인으로 사용한다고 명시해줘야 한다.
@@ -322,7 +326,7 @@ functions:
 ```
 
 #### 4. run it locally
-이제 남은 건 로컬에서 실행하는 것 뿐이다. 먼저, 플러그인의 초기화를 위해 다음의 명령을 입력해준다.
+이제 남은 건 로컬에서 실행하는 것 뿐이다. 먼저 플러그인의 초기화를 위해 다음의 명령을 입력해준다.
 
 ```sh
 $ serverless
@@ -334,7 +338,7 @@ $ serverless
 
 정상적으로 플러그인이 등록되었을 시, 위의 사진에 나와있는 것 처럼 `Offline` 이라는 글자가 출력된다.
 
-이제 다음 명령으로 로컬에서 serverless를 실행하도록 하자.
+이제 다음 명령으로 로컬에서 serverless를 실행해보도록 하자.
 
 ```sh
 $ serverless offline start
@@ -344,20 +348,18 @@ $ serverless offline start
 
 ![serverless offline start](./assets/imgs/serverless-offline-start.jpg)
 
-`http://localhost:3000/` 위치에 접속하면 다음과 같은 값이 응답으로 돌아올 것이다.
+`http://localhost:3000/` 위치에 접속하면 다음과 같이 `Hello!`가 응답으로 돌아올 것이다.
 
 ![serverless offline start: web](./assets/imgs/serverless-offline-start-web.jpg)
 
 이렇게 개발을 진행하면 된다. 개발이 완료되면 다시 deploying 명령을 통해 AWS로 업로드하면 되고...
 
-## Kakao-payment (Option)
+## Kakao-payment
 (카카오 플랫폼을 사용해 본 경험이 있다는 전제 아래에 진행하도록 하겠습니다.)
 
 ![kakao payment](http://www.techforkorea.com/wp-content/uploads/2017/01/unnamed-1-11.jpg)
 
-카카오 플랫폼 서비스를 통해 REST API만으로 PC웹, 모바일 웹, 모바일 앱 등과 같이 다양한 환경에서 아주 간단히 결제를 진행할 수 있다.
-
-(자세한 건 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api)를 참고)
+카카오 플랫폼 서비스를 통해 REST API만으로 PC웹, 모바일 웹, 모바일 앱 등과 같이 다양한 환경에서 아주 간단히 결제를 진행할 수 있다. (자세한 건 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api)를 참고)
 
 가령 하나의 결제 건에 대한 테스트를 진행하고 싶다면, 다음과 같이 요청을 보내기만 하면 된다.
 
@@ -377,11 +379,11 @@ curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
 --data-urlencode 'cancel_url=https://developers.kakao.com/cancel' # 결제 취소 시 redirect url
 ```
 
-이 외의 옵션은 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api#단건결제-프로세스)를 참고.
+이 외의 옵션은 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api#단건결제-프로세스)를 참고하자.
 
 요청이 성공하면 다음과 같은 응답이 JSON으로 반환된다.
 
-```json
+```js
 {
  "tid": "T1234567890123456789", // 결제 고유 번호
  "next_redirect_app_url": "https://mockup-pg-web.kakao.com/v1/xxxxxxxxxx/aInfo", // 모바일 앱 결제 url
@@ -400,9 +402,11 @@ curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
 참고로 한 번 사용된 링크는 재사용할 수 없기 때문에, 필요시마다 가져와야 한다.
 
 ### Development of Kakao-payment using Serverless
-nodejs를 이용해 결제요청을 보낸 뒤, 링크를 받아와 결제 페이지로 리다이렉트 시키는 서비스를 serverless AWS를 이용한 FaaS로 구현해보도록 하겠다.
+nodejs를 이용해 결제요청을 보낸 뒤, 링크를 받아와 결제 페이지(PC 웹)로 리다이렉트 시키는 서비스를 serverless AWS를 이용한 FaaS로 구현해보도록 하겠다.
 
 #### Installation
+먼저 프로젝트를 만들고, 쉬운 개발을 위해 _serverless-offline_ 플러그인을 설치하도록 하겠다.
+
 ```sh
 $ serverless create --template aws-nodejs --path kakao-payment-test
 
@@ -412,6 +416,8 @@ $ npm i serverless-offline --save-dev
 ```
 
 #### Configuration
+플러그인과 핸들링할 요청, 그리고 핸들러 함수를 명시한다.
+
 ```yml
 # serverless.yml
 
@@ -424,8 +430,6 @@ provider:
 plugins:
   - serverless-offline
 
-region: ap-northeast-2
-
 functions:
   payment:
     handler: handler.payment
@@ -436,15 +440,27 @@ functions:
 ```
 
 #### Development
+마지막으로 실행될 함수를 정의해주도록 하자. 동작은 다음과 같다.
+
+1. `https://kapi.kakao.com/v1/payment/ready`로 필요 정보와 함께 결제 요청을 보낸다.
+2. 반환되는 JSON 값 중, PC웹 결제에 해당되는 URL을  가져온다.
+3. HTTP 301 코드와 _Location_ 헤더를 이용해 redirect 응답을 보낸다.
+
+이로써 사용자가 서비스 링크(endpoint)로 접속할 시 카카오 결제 창으로 이동(redirect)하게 된다.
+
+이를 구현해보면 다음과 같다.
+
 ```js
 // handler.js
 
 'use strict';
 
-const axios = require('axios'); // 요청을 위한 모듈
+// 요청을 위한 모듈
+const axios = require('axios');
 
 module.exports.payment = async () => {
 
+  // 요청을 보내고, 그에 대한 응답을 받음
   const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', [
     'cid=TC0ONETIME',
     'partner_order_id=partner_order_id',
@@ -462,22 +478,30 @@ module.exports.payment = async () => {
       'Authorization': 'KakaoAK xxxxxxxxxx',
       'Content-Type': 'application/x-www-form-urlencoded'
     }
-  }); // 요청을 보내고 그에대한 응답을 받음
+  });
 
+  // 반환되는 JSON 값 중, PC웹 결제에 해당되는 url을 가져옴
+  const pc_url = req.data.next_redirect_pc_url;
+
+  // HTTP301을 이용한 redirect 응답 생성
   const response = {
     statusCode: 301,
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0',
-      Location: req.data.next_redirect_pc_url
+      Location: pc_url
     },
     body: ''
-  }; // 응답 생성
+  };
 
   return response; // 반환(응답)
 };
 ```
+
+헤더에 보면 `Cache-Control`, `Pragma`, `Expires`를 보내는데, 이는 chacing으로 인해 발생되는 이슈를 막기 위해서이다. ([아래에서 자세히 다루도록 하겠다.](#watch-out))
+
+여기서 [axios](https://github.com/axios/axios) 모듈이 사용되었는데, 이는 코드에서도 나와있듯이 'POST' 요청을 보내기 위해 사용된 모듈이다.
 
 #### Test
 ```sh
@@ -502,8 +526,7 @@ $ curl -I -HEAD http://localhost:3000/
       'Pragma': 'no-cache',
       'Expires': '0'
       ```
-  3. 그렇지 않을 경우 cache로 인해 같은 링크로 계속 redirect 될 것이며, 이는 같은 결제 건에 대해서만 redirect 한다는 의미이기 떄문에 결국 중복 거래라는 결과를 초래한다.
-      * ![실패(중복 또는 종료된 거래입니다) 이미지](#)
+  3. 그렇지 않을 경우 cache로 인해 같은 링크로 계속 redirect 될 것이며, 이는 같은 결제 건에 대해서만 redirect 한다는 의미이기 때문에 결국 중복 거래라는 결과를 초래한다.
 
 > 과금
   * AWS는 [프리 티어](https://aws.amazon.com/ko/free/?awsf.Free%20Tier%20Types=categories%23featured) 라는 서비스를 제공하여 AWS의 플랫폼과 제품 및 서비스를 무료로 체험해 볼 수 있도록 한다. 여기의 모든 과정들은 (잘만 따라온다면) 프리 티어의 범주 안에 속하는 것들이니 과금의 걱정은 하지 않아도 된다.
@@ -515,3 +538,4 @@ $ curl -I -HEAD http://localhost:3000/
 * [AWS Korea: AWS Lambda와 API Gateway를 통한 Serverless Architecture 특집](https://www.slideshare.net/awskorea/serverless-architecture-lambda-api-gateway)
 * [A creash course on Sserverless with Node.js](https://hackernoon.com/a-crash-course-on-serverless-with-node-js-632b37d58b44)
 * [Velopert - 서버리스 아키텍쳐란?](https://velopert.com/3543)
+* [Mike Roberts - Serverless Architectures](https://martinfowler.com/articles/serverless.html)
