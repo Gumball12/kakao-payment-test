@@ -1,7 +1,7 @@
 # Serverless AWS를 이용해 FaaS로 구현한 카카오 테스트 결제 서비스
 ![what-is-function-as-a-service-serverless-architectures](https://stackify.com/wp-content/uploads/2017/05/what-is-function-as-a-service-serverless-architectures-are-here-11196.png)
 
-'서버리스 아키텍쳐' 라는 말이 있다. 서버가 없다는 의미가 아니라... 서버리스 아키텍쳐를 서비스해주는 기업에서 서버에 대해 알아서 프로비저닝 또는 유지보수를 해 주기 때문에, __서버에 대해 더 이상 신경쓰지 않아도 된다__ 는 의미로 받아들이면 된다.
+'서버리스 아키텍쳐' 라는 말이 있다. 이는 서버가 없다는 의미가 아니라... 서버리스 아키텍쳐를 서비스해주는 기업에서 서버에 대해 알아서 프로비저닝 또는 유지보수를 해 주기 때문에, __서버에 대해 더 이상 신경쓰지 않아도 된다__ 는 의미로 받아들이면 된다.
 
 좀 더 자세히 설명하자면... 서버 자체를 구현해야 했거나(IaaS, Infrastructure as a Service), 적어도 애플리케이션을 구현해야 했던(PaaS, Platform as a Service) 기존의 방식에서 탈피해 __정말 필요한 기능에 대해서만__ 개발할 수 있도록 하는 [클라우드 컴퓨팅 서비스](https://ko.wikipedia.org/wiki/%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C_%EC%BB%B4%ED%93%A8%ED%8C%85)의 종류라고 할 수 있다.
 
@@ -517,20 +517,45 @@ $ curl -I -HEAD http://localhost:3000/
 `http://localhost:3000/` 에도 접속해보도록 하자(PC 웹). 카카오 결제 페이지로 redirect 될 것이다.
 
 #### Watch out!
-> redirect cache
-  1. HTTP 301로 넘어가는 redirect response는 Crome 등 현대적인 브라우저에서 효율을 위해 caching 된다.
-      * [SO - How long do browsers cache HTTP 301s?](https://stackoverflow.com/a/21396547)
-  2. 때문에 다음과 같이 caching하지 말라는 헤더를 추가적으로 보내줘야만 한다.
-      ```text
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-      ```
-  3. 그렇지 않을 경우 cache로 인해 같은 링크로 계속 redirect 될 것이며, 이는 같은 결제 건에 대해서만 redirect 한다는 의미이기 때문에 결국 중복 거래라는 결과를 초래한다.
+개발 시 발생되었던 문제 또는 주의할 것들
 
-> 과금
-  * AWS는 [프리 티어](https://aws.amazon.com/ko/free/?awsf.Free%20Tier%20Types=categories%23featured) 라는 서비스를 제공하여 AWS의 플랫폼과 제품 및 서비스를 무료로 체험해 볼 수 있도록 한다. 여기의 모든 과정들은 (잘만 따라온다면) 프리 티어의 범주 안에 속하는 것들이니 과금의 걱정은 하지 않아도 된다.
-  * 그래도 과금이 걱정된다면 [결제 및 비용 관리](https://console.aws.amazon.com/billing/home?nc2=h_m_bc)에서 모든 청구 비용을 확인할 수도 있으니 참고하도록 한다.
+##### application/x-www-form-urlencoded
+결제 요청 시 body는 `application/x-www-form-urlencoded` 콘텐츠 타입으로 보내야 하기 때문에, 다음과 같은 형식으로 body를 전송해야만 한다.
+
+```text
+cid=TC0ONETIME&partner_order_id=partner_order_id&partner_user_id=partner_user_id&item_name=초코파이&quantity=1&total_amount=2200&vat_amount=200&tax_free_amount=0&approval_url=http://example.com&fail_url=http://example.com&cancel_url=http://example.com
+```
+
+만일 이러한 형태로 보내지 않았을 경우, 필요한 결제 관련 정보가 보내지지 않았다는 에러 메시지와 함께 에러 코드가 반환될 것이다.
+
+이러한 POST 메서드의 콘텐츠 타입은 [여기](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)를 참고하도록 한다.
+
+##### Admin key
+카카오페이 결제 요청 시 _Authorization_ 헤더의 값에 Admin key를 보내야 한다. 이 때, Admin key 값 앞에 'KakaoAK '를 붙여야 한다는 것을 주의하자.
+
+```text
+'Authorization': 'KakaoAK xxxxxxxxxx'
+```
+
+띄어쓰기도 포함이다.
+
+##### redirect cache
+HTTP 301로 넘어가는 redirect response는 Crome 등 현대적인 브라우저에서 효율을 위해 caching 된다.([SO - How long do browsers cache HTTP 301s?](https://stackoverflow.com/a/21396547))
+
+때문에 다음과 같이 caching하지 말라는 헤더를 추가적으로 보내줘야만 한다.
+
+```text
+'Cache-Control': 'no-cache, no-store, must-revalidate',
+'Pragma': 'no-cache',
+'Expires': '0'
+```
+
+그렇지 않을 경우 cache로 인해 같은 링크로 계속 redirect 될 것이며, 이는 같은 결제 건에 대해서만 redirect 한다는 의미이기 때문에 결국 중복 거래라는 메시지만을 보게 될 것이다.
+
+##### 과금
+AWS는 [프리 티어](https://aws.amazon.com/ko/free/?awsf.Free%20Tier%20Types=categories%23featured) 라는 서비스를 제공하여 AWS의 플랫폼과 제품 및 서비스를 무료로 체험해 볼 수 있도록 한다. 여기의 모든 과정들은 (잘만 따라온다면) 프리 티어의 범주 안에 속하는 것들이니 과금의 걱정은 하지 않아도 된다.
+
+그래도 과금이 걱정된다면 [결제 및 비용 관리](https://console.aws.amazon.com/billing/home?nc2=h_m_bc)에서 모든 청구 비용을 확인할 수도 있으니 참고하도록 한다.
 
 ---
 
