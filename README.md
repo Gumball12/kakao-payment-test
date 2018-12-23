@@ -10,7 +10,7 @@ Function as a Service의 약자인 FaaS는... 간단히 설명하자면 직접 �
 이러한 FaaS는 대다수의 공룡 기업들(MS, AWS, Google...)에서 제공하며, 우리는 이들 중 AWS의 Lambda를 이용해 Serverless architecture로 구현해보도록 하겠다.
 
 ## AWS Serverless
-![AWS serverless for microservices](.\assets\imgs\AWS-serverless-for-microservices.png)
+![AWS serverless for microservices](./assets/imgs/AWS-serverless-for-microservices.png)
 
 대표적인 FaaS 서비스인 AWS Lambda를 이용해 구현할 것이다. AWS Lambda에 함수를 업로드하고, 이를 호출하는 방식이다.
 
@@ -26,7 +26,7 @@ Function as a Service의 약자인 FaaS는... 간단히 설명하자면 직접 �
 주의할 것은 Lambda가 어떠한 상태를 저장하는 것은 아니기 때문에, 정보를 저장하기 위해서는 AWS DynamoDB와 같은 타 서비스를 Lambda에 연결해 사용해야 한다. 이렇게 Lambda는 AWS의 다른 서비스들과도 연결할 수 있다. 다만 이는 글의 주제와 맞지 않기 때문에, 더 알고 싶다면 [AWS Lambda 개발자 안내서](https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/use-cases.html)를 참고하도록 한다.
 
 ### AWS API Gateway
-![AWS API Gateway architecture](.\assets\imgs\AWS-API-Gateway.jpg)
+![AWS API Gateway architecture](./assets/imgs/AWS-API-Gateway.jpg)
 
 개발자가 API를 생성, 게시, 유지관리, 모니터링 등을 할 수 있는 AWS 서비스이다. API Gateway를 통해 Lambda 뿐 아니라 위의 그림에서와 같이 DDB(DynamoDB), EC2, S3 등의 여타 AWS 서비스들에 대해 액세스할 수 있는 endpoints를 생성할 수 있다.
 
@@ -90,31 +90,31 @@ $ serverless create --template aws-nodejs --path my-service
 #### 2. AWS IAM 만들기
 먼저 AWS 콘솔에 로그인한다. AWS 계정이 없는 경우 그냥 생성하고 똑같이 진행하면 된다.
 
-![IAM: search IAM](.\assets\imgs\IAM-search-IAM.jpg)
+![IAM: search IAM](./assets/imgs/IAM-search-IAM.jpg)
 
 콘솔 창의 왼쪽 상단 '서비스(Services)' 탭을 클릭 후, 다음과 같이 'IAM' 을 검색해 IAM 페이지로 들어가도록 하자.
 
-![IAM: Add user](.\assets\imgs\IAM-Add-user.jpg)
+![IAM: Add user](./assets/imgs/IAM-Add-user.jpg)
 
 IAM 페이지에 들어갔으면, 왼쪽 사용자 탭을 클릭한 뒤 '사용자 추가(Add User)' 버튼을 누른다.
 
-![IAM: Add user 1](.\assets\imgs\IAM-Add-user-1.jpg)
+![IAM: Add user 1](./assets/imgs/IAM-Add-user-1.jpg)
 
 다음으로 사용자 이름을 입력한 뒤, '프로그래밍 방식 액세스(Programmatic access)'에 체크한 뒤 다음 버튼을 누른다.
 
-![IAM: Add user 2](.\assets\imgs\IAM-Add-user-2.jpg)
+![IAM: Add user 2](./assets/imgs/IAM-Add-user-2.jpg)
 
 다음 '기존 정책 직접 연결(Attach existing policies directly)' 버튼을 클릭한 뒤, 나오는 목록에서 'AdministratorAccess'를 체크한다. 이후 다음 버튼을 누른다.
 
-![IAM: Add user 3](.\assets\imgs\IAM-Add-user-3.jpg)
+![IAM: Add user 3](./assets/imgs/IAM-Add-user-3.jpg)
 
 태그는 따로 추가할 것 없다. 다음 버튼을 눌러 계속 진행해주자.
 
-![IAM: Add user 4](.\assets\imgs\IAM-Add-user-4.jpg)
+![IAM: Add user 4](./assets/imgs/IAM-Add-user-4.jpg)
 
 마지막으로 검토 창에서 설정한대로 계정이 만들어졌는지 검토를 한 뒤, '사용자 만들기' 버튼으로 사용자를 추가해주도록 하자.
 
-![IAM: Add user 5](.\assets\imgs\IAM-Add-user-5.jpg)
+![IAM: Add user 5](./assets/imgs/IAM-Add-user-5.jpg)
 
 정상적으로 사용자가 추가되었다면, 위와 같은 화면이 반겨줄 것이다. 여기서 '액세스 키 ID(Access key ID)'와 '비밀 액세스 키(Secret access key)'를 Serverless 설정에서 사용할 것이다. 각각 복사해서 메모장에 잠시 붙여넣어주도록 하자.
 
@@ -133,7 +133,7 @@ $ serverless config credentials --provider aws --key xxxxxxxxxx --secret xxxxxxx
 
 첫 번째 key는 Access key ID가 들어가고, 두 번째 key는 Secret access key가 들어가게 된다. 성공하게 되면 다음과 같이 나타날 것이다.
 
-![serverless crediental configuration](.\assets\imgs\serverless-credential-configuration.jpg)
+![serverless crediental configuration](./assets/imgs/serverless-credential-configuration.jpg)
 
 참고로 이 명령을 통해 위의 사진에서도 나와있듯이 `~/.aws/credentials` 위치에 키값이 저장된다는 것을 알아두자.
 
@@ -150,14 +150,14 @@ $ serverless create --template aws-nodejs --path quick-start
 
 성공적으로 프로젝트를 생성하였을 경우, 다음과 같이 나타난다.
 
-![serverless create project](.\assets\imgs\serverless-create-project.jpg)
+![serverless create project](./assets/imgs/serverless-create-project.jpg)
 
 이렇게 잘 생성되었으면 이제 해당 폴더의 내용물이 어떤 것이 생성되었는지 보도록 하자.
 
 #### 5. init files
 다음과 같은 파일이 `quick-start` 폴더 아래에 위치하게 된다.
 
-![serverless create project init files](.\assets\imgs\serverless-create-project-init-files.jpg)
+![serverless create project init files](./assets/imgs/serverless-create-project-init-files.jpg)
 
 각각 다음과 같다. (`.gitignore`은 git 관련 파일이다.)
 
@@ -330,7 +330,7 @@ $ serverless
 
 입력하면 다음의 로그가 출력된다.
 
-![serverless offline init](.\assets\imgs\serverless-offline-init.jpg)
+![serverless offline init](./assets/imgs/serverless-offline-init.jpg)
 
 정상적으로 플러그인이 등록되었을 시, 위의 사진에 나와있는 것 처럼 `Offline` 이라는 글자가 출력된다.
 
@@ -342,11 +342,11 @@ $ serverless offline start
 
 정상적으로 실행되면 다음의 로그가 출력되며
 
-![serverless offline start](.\assets\imgs\serverless-offline-start.jpg)
+![serverless offline start](./assets/imgs/serverless-offline-start.jpg)
 
 `http://localhost:3000/` 위치에 접속하면 다음과 같은 값이 응답으로 돌아올 것이다.
 
-![serverless offline start: web](.\assets\imgs\serverless-offline-start-web.jpg)
+![serverless offline start: web](./assets/imgs/serverless-offline-start-web.jpg)
 
 이렇게 개발을 진행하면 된다. 개발이 완료되면 다시 deploying 명령을 통해 AWS로 업로드하면 되고...
 
@@ -362,18 +362,18 @@ $ serverless offline start
 가령 하나의 결제 건에 대한 테스트를 진행하고 싶다면, 다음과 같이 요청을 보내기만 하면 된다.
 
 ```sh
-curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' \ # 결제 요청 url
--H 'Authorization: KakaoAK xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \ # Admin key
---data-urlencode 'cid=TC0ONETIME' \ # 테스트 전용 가맹점 코드
---data-urlencode 'partner_order_id=partner_order_id' \ # 가맹점 주문번호
---data-urlencode 'partner_user_id=partner_user_id' \ # 가맹점 회원 ID
---data-urlencode 'item_name=초코파이' \ # 상품명
---data-urlencode 'quantity=1' \ # 상품 수량
---data-urlencode 'total_amount=2200' \ # 상품 총액
---data-urlencode 'vat_amount=200' \ # 상품 부과세 금액
---data-urlencode 'tax_free_amount=0' \ # 상품 비과세 금액
---data-urlencode 'approval_url=https://developers.kakao.com/success' \ # 결제 성공 시 redirect url
---data-urlencode 'fail_url=https://developers.kakao.com/fail' \ # 결제 실패 시 redirect url
+curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
+-H 'Authorization: KakaoAK xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' / # Admin key
+--data-urlencode 'cid=TC0ONETIME' / # 테스트 전용 가맹점 코드
+--data-urlencode 'partner_order_id=partner_order_id' / # 가맹점 주문번호
+--data-urlencode 'partner_user_id=partner_user_id' / # 가맹점 회원 ID
+--data-urlencode 'item_name=초코파이' / # 상품명
+--data-urlencode 'quantity=1' / # 상품 수량
+--data-urlencode 'total_amount=2200' / # 상품 총액
+--data-urlencode 'vat_amount=200' / # 상품 부과세 금액
+--data-urlencode 'tax_free_amount=0' / # 상품 비과세 금액
+--data-urlencode 'approval_url=https://developers.kakao.com/success' / # 결제 성공 시 redirect url
+--data-urlencode 'fail_url=https://developers.kakao.com/fail' / # 결제 실패 시 redirect url
 --data-urlencode 'cancel_url=https://developers.kakao.com/cancel' # 결제 취소 시 redirect url
 ```
 
@@ -488,7 +488,7 @@ $ curl -I -HEAD http://localhost:3000/
 
 정상적으로 실행되었을 경우 다음과 같은 헤더가 응답으로 반환된다.
 
-![kakao payment response](.\assets\imgs\kakao-payment-respnse.jpg)
+![kakao payment response](./assets/imgs/kakao-payment-respnse.jpg)
 
 `http://localhost:3000/` 에도 접속해보도록 하자(PC 웹). 카카오 결제 페이지로 redirect 될 것이다.
 
