@@ -1,38 +1,40 @@
 # Serverless AWS를 이용해 FaaS로 구현한 카카오 테스트 결제 서비스
 ![what-is-function-as-a-service-serverless-architectures](https://stackify.com/wp-content/uploads/2017/05/what-is-function-as-a-service-serverless-architectures-are-here-11196.png)
 
-'서버리스 아키텍쳐' 라는 말이 있다. 이는 서버가 없다는 의미가 아니라... 서버리스 아키텍쳐를 서비스해주는 기업에서 서버에 대해 알아서 프로비저닝 또는 유지보수를 해 주기 때문에, __서버에 대해 더 이상 신경쓰지 않아도 된다__ 는 의미로 받아들이면 된다.
+'서버리스 아키텍쳐' 라는 말이 있다. 이는 서버가 없다는 의미가 아니라... 서버리스 아키텍쳐를 서비스해주는 기업에서 서버에 대해 알아서 프로비저닝 또는 유지보수를 해 주기 때문에, __서버에 대해 더 이상 신경쓰지 않아도 된다__ 는 의미로 받아들이면 된다. 다시말하자면, 서버 자체를 구현해야 했거나(IaaS, Infrastructure as a Service), 적어도 애플리케이션을 빌드해야 했던(PaaS, Platform as a Service) 기존의 방식에서 탈피해 __정말 필요한 기능에 대해서만__ 개발할 수 있도록 하는 [클라우드 컴퓨팅 서비스](https://ko.wikipedia.org/wiki/%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C_%EC%BB%B4%ED%93%A8%ED%8C%85)의 종류라고 할 수 있다.
 
-좀 더 자세히 설명하자면... 서버 자체를 구현해야 했거나(IaaS, Infrastructure as a Service), 적어도 애플리케이션을 구현해야 했던(PaaS, Platform as a Service) 기존의 방식에서 탈피해 __정말 필요한 기능에 대해서만__ 개발할 수 있도록 하는 [클라우드 컴퓨팅 서비스](https://ko.wikipedia.org/wiki/%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C_%EC%BB%B4%ED%93%A8%ED%8C%85)의 종류라고 할 수 있다.
-
-이러한 서버리스 아키텍쳐를 이용해 개발을 진행하게 되면, 적은 비용으로도 아주 빠르게 최신 애플리케이션을 빌드할 수 있게 된다.
+이러한 서버리스 아키텍쳐를 이용해 개발을 진행하게 되면 적은 비용으로도 아주 빠르게 최신 애플리케이션을 빌드할 수 있다.
 
 서버리스 아키텍쳐는 서버에 대한 것들(DB, 계정 등...)을 API로 제공해주는 BaaS(Backend as a Service)와 특정 이벤트에 대해 함수를 실행하는 FaaS(Function as a Service)로 나눌 수 있는데, 우리는 이 _FaaS_ 에 대해 진행하도록 하겠다.
 
 FaaS의 동작 방식은 정말 간단하다. 개발자가 클라우드에 어떠한 함수를 업로드하고, 특정 이벤트가 발생했을 때에만 해당 함수를 실행하며, 함수가 실행된 횟수만큼 비용을 내는 방식이다.
 
-이 FaaS는 대다수의 공룡 기업들(MS, AWS, Google...)에서 제공하며, 우리는 이들 중 AWS의 Lambda를 이용해 서버리스 아키텍쳐를 간단히 구현해보고, 아래에서 카카오톡 테스트 결제 모듈을 서버리스 아키텍쳐로 구현해보도록 하겠다.
+이 FaaS는 대다수의 공룡 기업들(MS, AWS, Google...)에서 제공하며, 우리는 이들 중 AWS의 Lambda를 이용해 서버리스 아키텍쳐를 간단히 구현해보고, 카카오톡 테스트 결제 모듈을 서버리스 아키텍쳐로 구현해보도록 하겠다.
 
 ## AWS Serverless
 ![AWS serverless for microservices](./assets/imgs/AWS-serverless-for-microservices.png)
 
 AWS는 Lambda와 API Gateway를 통해 서버리스 아키텍쳐를 구현할 수 있도록 하고 있다.
 
+참고로 AWS는 [프리 티어](https://aws.amazon.com/ko/free/?awsf.Free%20Tier%20Types=categories%23featured) 라는 서비스를 제공하여 AWS의 플랫폼과 제품 및 서비스를 무료로 체험해 볼 수 있도록 한다. 여기의 모든 과정들은 (잘만 따라온다면) 프리 티어의 범주 안에 속하는 것들이니 과금의 걱정은 하지 않아도 된다.
+
+그래도 과금이 걱정된다면 [결제 및 비용 관리](https://console.aws.amazon.com/billing/home?nc2=h_m_bc)에서 모든 청구 비용을 확인할 수도 있으니 참고하도록 한다.
+
 ### AWS Lambda
 ![AWS Lambda](https://d1.awsstatic.com/Digital%20Marketing/House/PAC/2up/PAC-Q4_House-Ads_Lambda_2up.62dc7e19b7b2e0a2c06821594c31f1ce00a6bdda.png)
 
-어떠한 이벤트에 대해 코드를 실행하고, 그 값을 응답으로 반환하거나 컴퓨팅 리소스를 관리하는 [AWS serverless computing](https://aws.amazon.com/ko/serverless/) 서비스이다.
+어떠한 이벤트에 대해 코드를 실행하고 컴퓨팅 리소스를 관리하는 [AWS serverless computing](https://aws.amazon.com/ko/serverless/) 서비스이다.
 
-간단히 말하자면 Lambda에 어떠한 함수를 작성(또는 업로드)한 뒤, API Gateway와 같은 서비스를 이용해 이벤트에 연결한다. 이후 이벤트가 트리거되는 즉시 해당 함수를 실행하는 것.
+간단히 설명하자면 Lambda에 어떠한 함수를 작성(또는 업로드)한 뒤, API Gateway와 같은 서비스를 이용해 이벤트에 연결한다. 이후 이벤트가 트리거되는 즉시 해당 함수를 실행하는 것.
 
-주의할 것은 Lambda가 어떠한 상태를 저장하는 것은 아니기 때문에, 정보를 저장하기 위해서는 AWS DynamoDB와 같은 타 서비스를 Lambda에 연결해 사용해야 한다. 이렇게 Lambda는 AWS의 다른 서비스들과도 연결할 수 있다. 다만 이는 글의 주제와 맞지 않기 때문에, 더 알고 싶다면 [AWS Lambda 개발자 안내서](https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/use-cases.html)를 참고하도록 한다.
+주의할 것은 Lambda가 어떠한 상태를 저장하는 것은 아니기 때문에, 값을 저장하기 위해서는 AWS DynamoDB와 같은 타 서비스를 Lambda에 연결해 사용해야 한다. 이렇게 Lambda는 AWS의 다른 서비스들과도 연결할 수 있다. 다만 이는 글의 주제와 맞지 않기 때문에, 더 알고 싶다면 [AWS Lambda 개발자 안내서](https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/use-cases.html)를 참고하도록 한다.
 
 ### AWS API Gateway
 ![AWS API Gateway architecture](./assets/imgs/AWS-API-Gateway.jpg)
 
-개발자가 API를 생성, 게시, 유지관리, 모니터링 등을 할 수 있는 AWS 서비스이다. API Gateway를 통해 Lambda 뿐 아니라 위의 그림에서와 같이 DDB(DynamoDB), EC2, S3 등의 여타 AWS 서비스들에 대해 액세스할 수 있는 endpoints를 생성할 수 있다.
+개발자가 API를 생성, 게시, 유지관리, 모니터링 등을 할 수 있는 AWS 서비스이다. API Gateway를 통해 Lambda 뿐 아니라 위의 그림에서와 같이 DDB(DynamoDB), EC2, S3 등 여타 AWS 서비스들에 대해 액세스할 수 있는 endpoints를 생성할 수 있다.
 
-다음과 같은 HTTP 요청만으로도 Lambda를 실행할 수 있다는 말.
+이로써 다음과 같은 HTTP 요청만으로 Lambda의 함수를 실행할 수 있게 된다.
 
 ```sh
 $ curl -X GET https://my-lambda-api-gateway-endpoint.com/
@@ -49,7 +51,7 @@ $ curl -X GET https://my-lambda-api-gateway-endpoint.com/
 
 Serverless는 위와 같은 서버리스 아키텍쳐를 배포하고 운영하기 위한 [프레임워크](https://en.wikipedia.org/wiki/Software_framework)이다.
 
-Serverless를 사용함으로써 아주 쉽고 간편하게 AWS 서버리스 아키텍쳐인를 구현할 수 있다. 먼저 설치부터 시작해 하나하나 진행해보도록 하자.
+Serverless를 사용함으로써 아주 쉽고 간편하게 AWS 서버리스 아키텍쳐를 구현할 수 있다. 설치부터 시작해 하나하나 진행해보도록 하자.
 
 ### Quick start
 Serverless를 설치하는 것 부터 시작해, `Hello!` 를 반환하는 서비스를 만들어보도록 하겠다.
@@ -78,7 +80,7 @@ npm 설치를 마쳤다면, 다음 순서대로 serverless를 설치해보도록
 $ npm install -g serverless
 ```
 
-이 명령은 global하게 serverless를 설치한다는 것을 의미한다. 이 명령을 통해 다음과 같이 커맨드 창에서 해당 모듈로 접근할 수 있게 된다. ([SO - what does the “-g” flag do in the command “npm install -g <something>”?](https://stackoverflow.com/a/13167605))
+이 명령은 global하게 serverless를 설치한다는 것을 의미한다. 이 명령을 통해 다음과 같이 커맨드 창에서 해당 모듈로 접근할 수 있게 된다. ([SO - what does the "-g" flag do in the command "npm install -g &lt;something&gt;"?](https://stackoverflow.com/a/13167605))
 
 ```sh
 $ serverless create --template aws-nodejs --path my-service
@@ -87,10 +89,10 @@ $ serverless create --template aws-nodejs --path my-service
 # 아직 입력은 하지 말도록 하자.
 ```
 
-아무튼 설치를 마쳤다면 이제 AWS의 권한을 얻어야 할 차례이다.
+아무튼 설치를 마쳤다면 이제 serverless에서 AWS의 권한을 얻어야 할 차례이다.
 
 #### 2. AWS IAM 만들기
-먼저 AWS 콘솔에 로그인한다. AWS 계정이 없는 경우 그냥 생성하고 똑같이 진행하면 된다.
+먼저 AWS 콘솔에 로그인한다. AWS 계정이 없는 경우 생성하도록 하자.
 
 ![IAM: search IAM](./assets/imgs/IAM-search-IAM.jpg)
 
@@ -102,11 +104,11 @@ IAM 페이지에 들어갔으면, 왼쪽 사용자 탭을 클릭한 뒤 '사용�
 
 ![IAM: Add user 1](./assets/imgs/IAM-Add-user-1.jpg)
 
-다음으로 사용자 이름을 입력한 뒤, '프로그래밍 방식 액세스(Programmatic access)'에 체크한 뒤 다음 버튼을 누른다.
+적절한 사용자 이름을 입력한 뒤, '프로그래밍 방식 액세스(Programmatic access)'에 체크한 뒤 다음 버튼을 누른다.
 
 ![IAM: Add user 2](./assets/imgs/IAM-Add-user-2.jpg)
 
-다음 '기존 정책 직접 연결(Attach existing policies directly)' 버튼을 클릭한 뒤, 나오는 목록에서 'AdministratorAccess'를 체크한다. 이후 다음 버튼을 누른다.
+'기존 정책 직접 연결(Attach existing policies directly)' 버튼을 클릭한 뒤, 나오는 목록에서 'AdministratorAccess'를 체크한 뒤 다음 버튼을 누른다.
 
 ![IAM: Add user 3](./assets/imgs/IAM-Add-user-3.jpg)
 
@@ -127,17 +129,15 @@ IAM 페이지에 들어갔으면, 왼쪽 사용자 탭을 클릭한 뒤 '사용�
 #### 3. Serverless credentials 설정
 Serverless에서 여러가지 작업을 하기 위한 AWS 권한을 설정해주도록 하자.
 
-다음의 명령으로 가능하다.
-
 ```sh
 $ serverless config credentials --provider aws --key xxxxxxxxxx --secret xxxxxxxxxx
 ```
 
-첫 번째 key는 Access key ID가 들어가고, 두 번째 key는 Secret access key가 들어가게 된다. 성공하게 되면 다음과 같이 나타날 것이다.
+첫 번째 key는 Access key ID가 들어가고, 두 번째 key는 Secret access key가 들어가게 된다. 성공하게 되면 다음과 같은 로그가 출력된다.
 
 ![serverless crediental configuration](./assets/imgs/serverless-credential-configuration.jpg)
 
-참고로 이 명령을 통해 위의 사진에서도 나와있듯이 `~/.aws/credentials` 위치에 키값이 저장된다는 것을 알아두자.
+참고로 이 명령을 통해 `~/.aws/credentials` 위치에 키값이 저장된다는 것을 알아두자. 이는 로그에도 출력된다.
 
 이것으로 Serverless에서 AWS를 사용할 수 있는 모든 준비를 마쳤다. 이제 serverless project를 생성해보도록 하겠다.
 
@@ -145,18 +145,20 @@ $ serverless config credentials --provider aws --key xxxxxxxxxx --secret xxxxxxx
 프로젝트를 생성할 폴더로 명령창의 위치를 옮긴 다음(cd), 다음의 명령으로 serverless 프로젝트를 생성한다.
 
 ```sh
+$ cd project-folder
+
 $ serverless create --template aws-nodejs --path quick-start
 
 $ cd quick-start
 ```
 
-이 명령은 Node.js 런타임 환경에서 개발을 진행할 것이며, AWS의 서버리스 아키텍쳐 서비스를 이용할 것임을 의미한다. 참고로 명령을 입력하기 전에 프로젝트 이름인 `quick-start` 라는 이름의 폴더는 없어야만 한다.
+이 명령은 AWS의 서버리스 아키텍쳐 서비스를 이용할 것이며, Node.js 런타임 환경에서 Lambda의 개발을 진행할 것임을 의미한다. 참고로 명령을 입력하기 전에 프로젝트 이름인 `quick-start` 라는 이름의 폴더는 없어야만 한다.
 
 성공적으로 프로젝트를 생성하였을 경우, 다음과 같이 나타난다.
 
 ![serverless create project](./assets/imgs/serverless-create-project.jpg)
 
-이렇게 잘 생성되었으면 이제 해당 폴더의 내용물이 어떤 것이 생성되었는지 보도록 하자.
+이렇게 잘 생성되었으면 이제 해당 폴더에 어떠한 것들이 생성되었는지 보도록 하자.
 
 #### 5. init files
 다음과 같은 파일이 `quick-start` 폴더 아래에 위치하게 된다.
@@ -166,7 +168,7 @@ $ cd quick-start
 각각 다음과 같다. ([`.gitignore`은 git 관련 파일](https://git-scm.com/docs/gitignore))
 
 ##### `serverless.yml`
-서비스의 모든 설정들이 들어있는 파일이다. 내용은 다음과 같다.
+서비스의 모든 설정들이 들어있는 파일이다. 주석을 제외한 내용은 다음과 같다.
 
 ```yml
 # serverless.yml
@@ -179,14 +181,14 @@ provider:
 
 functions: # function lists
   hello: # function name
-    handler: handler.hello # handler function (<file name.function>)
+    handler: handler.hello # handler function (<file name>.<function name>)
 ```
 
 * _service_: 서비스의 이름
 * _provider_: 서버리스 아키텍쳐 서비스 제공 업체와 런타임 환경 정의
 * _funcitons_: 서비스의 모든 함수들에 대한 리스트
 
-_functions_ 프로퍼티 아래에는 구분을 위한 이름과 요청을 핸들링할 함수가 명시되어있으며, 이 곳에 _events_ 프로퍼티를 추가해 이벤트를 등록할 수 있다.
+_functions_ 프로퍼티 아래에는 구분을 위한 이름과 요청을 핸들링할 함수가 명시되어있으며, 이 곳에 _events_ 프로퍼티를 추가해 함수를 실행할 이벤트를 등록할 수 있다.
 
 ##### `handler.js`
 파일을 열어보면 다음과 같다. Lambda 부분에 해당되는 함수라고 생각하면 된다.
@@ -210,7 +212,7 @@ module.exports.hello = async (event, context) => {
 * _event_: 헤더 등의 정보
 * _context_: 실행되는 함수 등의 정보
 
-`serverless.yml`의 _funcitons_ 프로퍼티에 설정했던 핸들러 함수인 `handler.js` 파일의 _hello_ 함수이다. 즉, 요청이 들어오면 이 함수가 실행된다는 것. (이벤트 등록은 아래에서 진행하도록 하겠다.)
+`serverless.yml`의 _funcitons_ 프로퍼티에 설정했던 핸들러 함수인 `handler.js` 파일의 _hello_ 함수이다. 요청이 들어오면 이 함수가 실행된다. (말했지만 이벤트(요청) 등록은 아래에서 진행하도록 하겠다.)
 
 반환되는 각각의 요소는 다음의 의미를 갖는다.
 
@@ -226,7 +228,7 @@ return {
 };
 ```
 
-참고로 원래 다음과 같은 callback 패턴을 사용하였으나, 1.34.0 버전에서부터 prmise 패턴을 이용하여 반환할 수 있도록 구현되었다. ([Support returning promises from serverless.js](https://github.com/serverless/serverless/pull/4827))
+참고로 원래 다음과 같은 callback 패턴을 사용하였으나, 1.34.0 버전에서부터 promise 패턴을 이용하여 반환할 수 있도록 구현되었다. ([Support returning promises from serverless.js](https://github.com/serverless/serverless/pull/4827))
 
 ```js
 // handler.js (using callback pattern)
@@ -239,7 +241,7 @@ module.exports.hello = (event, context, callback) => {
 
 물론 원한다면 callback 패턴을 사용할 수도 있지만, [코드의 가독성과 간결함을 위해 promise 패턴을 사용할 수 있도록 하자.](https://medium.com/@pitzcarraldo/callback-hell-%EA%B3%BC-promise-pattern-471976ffd139)
 
-아무튼 핸들러 함수는 모든 준비를 마쳤다. 남은 건 이제 이 함수에 대한 이벤트를 등록하는 것 뿐이다.
+아무튼 핸들러 함수는 모든 준비를 마쳤다. 남은 건 이제 이 함수에 대한 이벤트(요청)를 등록하는 것 뿐이다.
 
 이는 `serverless.yml` 에 다음과 같이 _events_ 프로퍼티를 추가함으로써 가능하다.
 
@@ -261,7 +263,7 @@ functions:
           method: get
 ```
 
-보면 대략 알 수도 있을텐데, '/' 위치에 'GET' HTTP에 대한 요청을 `handler.js` 파일의 _hello_ 함수에서 핸들링하겠다는 의미이다.
+대략 의미를 파악할 수도 있을텐데, '/' 위치에 'GET' HTTP에 대한 요청을 `handler.js` 파일의 _hello_ 함수에서 핸들링하겠다는 의미이다.
 
 API Gateway에 대한 부분이라고 생각하면 된다. 여기서 받아들일 요청을 정의하고, 해당 요청이 들어오면 연결된 핸들러 함수를 실행하는 것이다.
 
@@ -455,37 +457,48 @@ functions:
 
 'use strict';
 
-// 요청을 위한 모듈
-const axios = require('axios');
+const axios = require('axios'); // using 'axios' node module for HTTP request
 
-module.exports.payment = async () => {
+module.exports.payment = async () => { // meaning 'async' is 'asynchronous function'
 
-  // 요청을 보내고, 그에 대한 응답을 받음
-  const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', [
+  // set variables
+  const item_name = '초코파이';
+  const quantity = 1;
+  const total_amount = 2200;
+  const vat_amount = 200;
+  const tax_free_amount = 0;
+
+  const approval_url = 'http://example.com/success';
+  const fail_url = 'http://example.com/fail';
+  const cancel_url = 'http://example.com/cancel';
+
+  // set data
+  const data = [
     'cid=TC0ONETIME',
     'partner_order_id=partner_order_id',
     'partner_user_id=partner_user_id',
-    'item_name=초코파이',
-    'quantity=1',
-    'total_amount=2200',
-    'vat_amount=200',
-    'tax_free_amount=0',
-    'approval_url=http://example.com',
-    'fail_url=http://example.com',
-    'cancel_url=http://example.com'
-  ].join('&'), {
+    `item_name=${item_name}`,
+    `quantity=${quantity}`,
+    `total_amount=${total_amount}`,
+    `vat_amount=${vat_amount}`,
+    `tax_free_amount=${tax_free_amount}`,
+    `approval_url=${approval_url}`,
+    `fail_url=${fail_url}`,
+    `cancel_url=${cancel_url}`
+  ].join('&');
+
+  // send request (kakao payment)
+  const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', data, {
     headers: {
       'Authorization': 'KakaoAK xxxxxxxxxx',
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   });
 
-  // 반환되는 JSON 값 중, PC웹 결제에 해당되는 url을 가져옴
-  const pc_url = req.data.next_redirect_pc_url;
+  const pc_url = req.data.next_redirect_pc_url; // get pc url
 
-  // HTTP301을 이용한 redirect 응답 생성
   const response = {
-    statusCode: 301,
+    statusCode: 301, // redirect
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
@@ -495,11 +508,11 @@ module.exports.payment = async () => {
     body: ''
   };
 
-  return response; // 반환(응답)
+  return response;
 };
 ```
 
-헤더에 보면 `Cache-Control`, `Pragma`, `Expires`를 보내는데, 이는 chacing으로 인해 발생되는 이슈를 막기 위해서이다. ([아래에서 자세히 다루도록 하겠다.](#watch-out))
+헤더에 보면 `Cache-Control`, `Pragma`, `Expires`를 보내는데, 이는 chacing으로 인해 발생되는 이슈를 막기 위해서이다. ([아래에서 자세히 다루도록 하겠다.](#redirect-cache))
 
 여기서 [axios](https://github.com/axios/axios) 모듈이 사용되었는데, 이는 코드에서도 나와있듯이 'POST' 요청을 보내기 위해 사용된 모듈이다.
 
@@ -551,13 +564,6 @@ HTTP 301로 넘어가는 redirect response는 Crome 등 현대적인 브라우�
 ```
 
 그렇지 않을 경우 cache로 인해 같은 링크로 계속 redirect 될 것이며, 이는 같은 결제 건에 대해서만 redirect 한다는 의미이기 때문에 결국 중복 거래라는 메시지만을 보게 될 것이다.
-
-##### 과금
-AWS는 [프리 티어](https://aws.amazon.com/ko/free/?awsf.Free%20Tier%20Types=categories%23featured) 라는 서비스를 제공하여 AWS의 플랫폼과 제품 및 서비스를 무료로 체험해 볼 수 있도록 한다. 여기의 모든 과정들은 (잘만 따라온다면) 프리 티어의 범주 안에 속하는 것들이니 과금의 걱정은 하지 않아도 된다.
-
-그래도 과금이 걱정된다면 [결제 및 비용 관리](https://console.aws.amazon.com/billing/home?nc2=h_m_bc)에서 모든 청구 비용을 확인할 수도 있으니 참고하도록 한다.
-
----
 
 # 참고
 * [AWS Korea: AWS Lambda와 API Gateway를 통한 Serverless Architecture 특집](https://www.slideshare.net/awskorea/serverless-architecture-lambda-api-gateway)
