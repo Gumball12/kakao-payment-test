@@ -357,17 +357,43 @@ $ serverless offline start
 이렇게 개발을 진행하면 된다. 개발이 완료되면 다시 deploying 명령을 통해 AWS로 업로드하면 되고...
 
 ## Kakao-payment
-(카카오 플랫폼을 사용해 본 경험이 있다는 전제 아래에 진행하도록 하겠습니다.)
-
 ![kakao payment](http://www.techforkorea.com/wp-content/uploads/2017/01/unnamed-1-11.jpg)
 
-카카오 플랫폼 서비스를 통해 REST API만으로 PC웹, 모바일 웹, 모바일 앱 등과 같이 다양한 환경에서 아주 간단히 결제를 진행할 수 있다. (자세한 건 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api)를 참고)
+[kakao developers](https://developers.kakao.com/)
 
-가령 하나의 결제 건에 대한 테스트를 진행하고 싶다면, 다음과 같이 요청을 보내기만 하면 된다.
+카카오에서는 앱 개팔 플랫폼 서비스를 통해 개발자들이 카카오의 서비스들을 이용한 개발을 아주 쉽게 진행할 수 있도록 하고 있다. 개중에서는 카카오페이를 REST API만으로 PC웹, 모바일 웹, 모바일 앱 등과 같이 다양한 환경에서 아주 간단히 결제를 진행할 수 있도록 하는 서비스도 있으며, 우리는 이 카카오페이 API를 이용해 테스트 결제 서비스를 구현해보도록 하겠다.
+
+### Create kakao application
+카카오페이 API 사용을 위해 먼저 자신의 카카오 애플리케이션을 등록해야만 한다. 카카오 개발자 페이지에 먼저 접속해주도록 하자.
+
+[kakao developers](https://developers.kakao.com/)
+
+만약 카카오 계정이 없다거나 로그인되어있지 않은 경우에는 회원가입 또는 로그인을 해 주도록 한다.
+
+![click 'my applications' button](./assets/imgs/click-my-applications-button.jpg)
+
+여기서 상단 우측에 보면 다음과 같이 '내 애플리케이션' 버튼이 보일 것이다. 클릭해주도록 하자.
+
+![click 'create appication' button](./assets/imgs/click-create-application-button.jpg)
+
+클릭해주면 왼쪽에 '앱 만들기' 버튼이 보일 것이다. 클릭해준다.
+
+![create application](./assets/imgs/create-application.jpg)
+
+적절한 이름을 입력한 뒤, '앱 만들기' 버튼으로 앱을 만들어준다.
+
+참고로 이름은 정말 아무거나 상관 없다.
+
+![application keys](./assets/imgs/application-keys.jpg)
+
+어플리케이션을 생성하게 되면 위와 같이 카카오 플랫폼 서비스에 접근할 수 있는 키도 함께 부여되는데, 여기서 __Admin 키__ 를 이용해 카카오페이 API를 사용할 수 있다.
+
+### Kakao payment API
+카카오페이 API는 정말 간단히 사용할 수 있다. 가령 하나의 결제 건에 대한 테스트를 진행하고 싶다면, 다음과 같이 요청을 보내기만 하면 된다.
 
 ```sh
 curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
--H 'Authorization: KakaoAK xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' / # Admin key
+-H 'Authorization: KakaoAK xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' / # 'xxx...' = Admin key
 --data-urlencode 'cid=TC0ONETIME' / # 테스트 전용 가맹점 코드
 --data-urlencode 'partner_order_id=partner_order_id' / # 가맹점 주문번호
 --data-urlencode 'partner_user_id=partner_user_id' / # 가맹점 회원 ID
@@ -380,8 +406,6 @@ curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
 --data-urlencode 'fail_url=https://developers.kakao.com/fail' / # 결제 실패 시 redirect url
 --data-urlencode 'cancel_url=https://developers.kakao.com/cancel' # 결제 취소 시 redirect url
 ```
-
-이 외의 옵션은 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api#단건결제-프로세스)를 참고하자.
 
 요청이 성공하면 다음과 같은 응답이 JSON으로 반환된다.
 
@@ -397,17 +421,19 @@ curl -v -X POST 'https://kapi.kakao.com/v1/payment/ready' / # 결제 요청 url
 }
 ```
 
-반한되는 URL로 적절히 이동하면 다음과 같은 화면이 반겨주며, 테스트 결제가 진행된다.
+request, response 옵션에 대한 자세한 설명이나 다른 옵션은 [여기](https://developers.kakao.com/docs/restapi/kakaopay-api#단건결제-프로세스)를 참고한다.
+
+반환되는 URL로 적절히 이동하면 다음과 같은 화면이 반겨주며, 테스트 결제가 진행된다.
 
 ![kakao payment process](https://developers.kakao.com/assets/images/rest/pay_process_pc.png)
 
-참고로 한 번 사용된 링크는 재사용할 수 없기 때문에, 필요시마다 가져와야 한다.
+참고로 한 번 사용된 URL은 재사용할 수 없기 때문에, 필요시마다 가져와줘야 한다.
 
 ### Development of Kakao-payment using Serverless
 nodejs를 이용해 결제요청을 보낸 뒤, 링크를 받아와 결제 페이지(PC 웹)로 리다이렉트 시키는 서비스를 serverless AWS를 이용한 FaaS로 구현해보도록 하겠다.
 
 #### Installation
-먼저 프로젝트를 만들고, 쉬운 개발을 위해 _serverless-offline_ 플러그인을 설치하도록 하겠다.
+먼저 프로젝트를 만들고, 효율적인 개발을 위해 _serverless-offline_ 플러그인과 _[axios](https://github.com/axios/axios)_ nodejs 모듈을 설치하도록 하겠다.
 
 ```sh
 $ serverless create --template aws-nodejs --path kakao-payment-test
@@ -415,10 +441,11 @@ $ serverless create --template aws-nodejs --path kakao-payment-test
 $ cd kakao-payment-test
 
 $ npm i serverless-offline --save-dev
+$ npm i axios # request를 위해 사용할 nodejs 모듈
 ```
 
 #### Configuration
-플러그인과 핸들링할 요청, 그리고 핸들러 함수를 명시한다.
+_serverless-offline_ 플러그인과 핸들링할 요청. 그리고 핸들러 함수를 명시한다.
 
 ```yml
 # serverless.yml
@@ -440,6 +467,8 @@ functions:
           path: /
           method: get
 ```
+
+설정 파일에 대한 설명은 [위에서 충분히 했다고 생각되기에](#5-init-files), 굳이 하지 않아도 상관은 없을 것이라 생각된다.
 
 #### Development
 마지막으로 실행될 함수를 정의해주도록 하자. 동작은 다음과 같다.
@@ -485,12 +514,12 @@ module.exports.payment = async () => { // meaning 'async' is 'asynchronous funct
     `approval_url=${approval_url}`,
     `fail_url=${fail_url}`,
     `cancel_url=${cancel_url}`
-  ].join('&');
+  ].join('&'); // encode data (application/x-www-form-urlencoded)
 
   // send request (kakao payment)
   const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', data, {
     headers: {
-      'Authorization': 'KakaoAK xxxxxxxxxx',
+      'Authorization': 'KakaoAK xxxxxxxxxx', // 'xxx...' = admin key
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   });
@@ -512,7 +541,7 @@ module.exports.payment = async () => { // meaning 'async' is 'asynchronous funct
 };
 ```
 
-헤더에 보면 `Cache-Control`, `Pragma`, `Expires`를 보내는데, 이는 chacing으로 인해 발생되는 이슈를 막기 위해서이다. ([아래에서 자세히 다루도록 하겠다.](#redirect-cache))
+헤더에 보면 `Cache-Control`, `Pragma`, `Expires`를 보내는데, 이는 chacing으로 인해 발생되는 이슈를 막기 위해서이다. [이는 아래에서 자세히 다루도록 하겠다.](#redirect-cache)
 
 여기서 [axios](https://github.com/axios/axios) 모듈이 사용되었는데, 이는 코드에서도 나와있듯이 'POST' 요청을 보내기 위해 사용된 모듈이다.
 
@@ -527,7 +556,9 @@ $ curl -I -HEAD http://localhost:3000/
 
 ![kakao payment response](./assets/imgs/kakao-payment-respnse.jpg)
 
-`http://localhost:3000/` 에도 접속해보도록 하자(PC 웹). 카카오 결제 페이지로 redirect 될 것이다.
+`http://localhost:3000/` 에도 접속해보도록 하자(PC 웹). 다음과 같이 카카오 결제 페이지로 redirect 될 것이다.
+
+![kakao payment page](./assets/imgs/kakao-payment-page.jpg)
 
 #### Watch out!
 개발 시 발생되었던 문제 또는 주의할 것들
@@ -541,7 +572,7 @@ cid=TC0ONETIME&partner_order_id=partner_order_id&partner_user_id=partner_user_id
 
 만일 이러한 형태로 보내지 않았을 경우, 필요한 결제 관련 정보가 보내지지 않았다는 에러 메시지와 함께 에러 코드가 반환될 것이다.
 
-이러한 POST 메서드의 콘텐츠 타입은 [여기](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)를 참고하도록 한다.
+이런 POST 메서드의 콘텐츠 타입은 [여기](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)를 참고하도록 한다.
 
 ##### Admin key
 카카오페이 결제 요청 시 _Authorization_ 헤더의 값에 Admin key를 보내야 한다. 이 때, Admin key 값 앞에 'KakaoAK '를 붙여야 한다는 것을 주의하자.
@@ -550,7 +581,7 @@ cid=TC0ONETIME&partner_order_id=partner_order_id&partner_user_id=partner_user_id
 'Authorization': 'KakaoAK xxxxxxxxxx'
 ```
 
-띄어쓰기도 포함이다.
+__띄어쓰기도 포함이다.__
 
 ##### redirect cache
 HTTP 301로 넘어가는 redirect response는 Crome 등 현대적인 브라우저에서 효율을 위해 caching 된다.([SO - How long do browsers cache HTTP 301s?](https://stackoverflow.com/a/21396547))

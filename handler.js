@@ -1,3 +1,5 @@
+// handler.js
+
 'use strict';
 
 const axios = require('axios'); // using 'axios' node module for HTTP request
@@ -28,12 +30,12 @@ module.exports.payment = async () => { // meaning 'async' is 'asynchronous funct
     `approval_url=${approval_url}`,
     `fail_url=${fail_url}`,
     `cancel_url=${cancel_url}`
-  ].join('&');
+  ].join('&'); // encode data (application/x-www-form-urlencoded)
 
   // send request (kakao payment)
   const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', data, {
     headers: {
-      'Authorization': 'KakaoAK xxxxxxxxxx',
+      'Authorization': 'KakaoAK xxxxxxxxxx', // 'xxx...' = admin key
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   });
