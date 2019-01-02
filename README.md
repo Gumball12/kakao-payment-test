@@ -282,6 +282,23 @@ $ serverless deploy -v
 
 이게 끝이다. 얼마나 간편한가.
 
+#### 7. Destroy projects
+프로젝트를 삭제하고 싶을 때는 다음과 같은 명령만 입력하면 된다.
+
+```sh
+$ serverless remove
+```
+
+다음과 같은 로그화 함께 aws에 업로드 된 것들이 제거된다.
+
+![destroy serverless project in cli](./assets/imgs/destroy-serverless-project-in-cli.jpg)
+
+당연히 실제 파일은 제거되지 않기 때문에 걱정하지 말자. 다음 명령으로 언제든지 다시 deploying 할 수 있다.
+
+```sh
+$ serverless deploy -v
+```
+
 ### Relieving the pain
 그러나 매번 핸들러 함수를 변경할 때 마다 deploying 할 수는 없을 것이다. 이는 [serverless offline](https://github.com/dherault/serverless-offline) 플러그인을 통해 해결할 수 있다.
 
