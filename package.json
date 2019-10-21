@@ -9,6 +9,6 @@
     "serverless-offline": "^3.31.3"
   },
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.1"
   }
 }
