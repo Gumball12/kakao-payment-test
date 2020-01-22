@@ -177,7 +177,7 @@ service: quick-start # service name
 
 provider:
   name: aws # service provider
-  runtime: nodejs8.10 # runtime
+  runtime: nodejs10.x # runtime
 
 functions: # function lists
   hello: # function name
@@ -252,7 +252,7 @@ service: quick-start
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.x
 
 functions:
   hello:
@@ -331,7 +331,7 @@ service: quick-start
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.x
 
 plugins: # added
   - serverless-offline
@@ -497,7 +497,7 @@ service: kakao-payment-test
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.x
 
 plugins:
   - serverless-offline
