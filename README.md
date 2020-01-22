@@ -63,10 +63,10 @@ Serverless는 Node.js 런타임 환경에서 제공되는 프레임워크이기 
 
 ```sh
 $ node -v
-# v8.10.0
+# v12.14.1
 
 $ npm -v
-# 6.1.0
+# 6.9.0
 ```
 
 물론 버전은 달라질 수 있다. 중요한 것은 저 명령이 실행되냐는 것.
@@ -308,6 +308,7 @@ $ serverless deploy -v
 해당 프로젝트 폴더(위의 예제에서는 `quick-start` 폴더가 될 것이다.)로 들어간 뒤 다음의 명령으로 _npm_ 사용을 위한 초기화를 진행하자.
 
 ```sh
+# yarn을 사용할 수도 있으나, 여기서는 npm을 사용하도록 하겠음
 $ npm init
 ```
 
@@ -320,7 +321,7 @@ $ npm init
 $ npm install serverless-offline --save-dev
 ```
 
-_--save-dev_ 옵션은 개발 시에만 사용되는 모듈임을 명시한다. 이 옵션을 사용하면 build 시에는 해당 모듈이 포함되지 않아 좀 더 가벼운 서비스를 만들 수 있다. ([SO - What is the difference between --save and --save-dev?](https://stackoverflow.com/a/42206389))
+_`--save-dev`_ 옵션은 개발 시에만 사용되는 모듈임을 명시한다. 이 옵션을 사용하면 build 시에는 해당 모듈이 포함되지 않아 좀 더 가벼운 서비스를 만들 수 있다. ([SO - What is the difference between --save and --save-dev?](https://stackoverflow.com/a/42206389))
 
 #### 3. Serverless configuration
 다음으로 `serverless.yml`에 해당 모듈을 플러그인으로 사용한다고 명시해줘야 한다.
@@ -403,7 +404,32 @@ $ serverless offline start
 
 ![application keys](./assets/imgs/application-keys.jpg)
 
-어플리케이션을 생성하게 되면 위와 같이 카카오 플랫폼 서비스에 접근할 수 있는 키도 함께 부여되는데, 여기서 __Admin 키__ 를 이용해 카카오페이 API를 사용할 수 있다.
+애플리케이션을 생성하게 되면 위와 같이 카카오 플랫폼 서비스에 접근할 수 있는 키도 함께 부여되는데, 여기서 __Admin 키__ 를 이용해 카카오페이 API를 사용할 수 있다.
+
+### Before Starting
+카카오톡 개발 플랫폼을 등록해줘야 정상적으로 작동하게 된다. 이는 카카오톡 개발가이드의 [시작하기 전에](https://developers.kakao.com/docs/restapi/kakaopay-api#시작하기-전에)를 참고해 작성하였다.
+
+먼저 애플리케이션 설정 창으로 이동한 다음...
+
+![application settings](./assets/imgs/application-settings.JPG)
+
+`설정 > 일반` 탭으로 이동한다.
+
+내리다보면 __플랫폼__ 메뉴가 보이는데, 처음에는 아무것도 없을 것이다.
+
+![kakao platform setting](./assets/imgs/kakao-platform-setting.JPG)
+
+이제 `플랫폼 추가 > 웹` 버튼을 누르고, 사이트 도메인에는 다음을 입력해주도록 하자.
+
+```
+http://example.com
+```
+
+예시 사이트가 아니다. 실제 저렇게 입력하면 된다. 입력 후에는 아래와 같은 화면이 나타나게 된다.
+
+![kakao platform setting over](./assets/imgs/kakao-platform-setting-end.JPG)
+
+이제 다음 단계를 진행하자. 아래에서 `http://example.com`을 만날 수 있을 것이다.
 
 ### Kakao payment API
 카카오페이 API는 정말 간단히 사용할 수 있다. 가령 하나의 결제 건에 대한 테스트를 진행하고 싶다면, 다음과 같이 요청을 보내기만 하면 된다.
