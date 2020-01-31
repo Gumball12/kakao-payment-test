@@ -2,7 +2,7 @@ service: kakao-payment-test
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs12.x
 
 plugins:
   - serverless-offline
@@ -15,4 +15,5 @@ functions:
     events:
       - http:
           path: /
-          method: get
+          # method: get
+          method: post
