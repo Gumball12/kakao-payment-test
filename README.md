@@ -592,7 +592,7 @@ module.exports.payment = async () => { // meaning 'async' is 'asynchronous funct
 ```sh
 $ serverless offline start # http://localhost:3000/
 
-$ curl -I -HEAD http://localhost:3000/
+$ curl -I -HEAD http://localhost:3000/ # 새로운 창에서 실행해야만 한다
 ```
 
 정상적으로 실행되었을 경우 다음과 같은 헤더가 응답으로 반환된다.
@@ -603,11 +603,190 @@ $ curl -I -HEAD http://localhost:3000/
 
 ![kakao payment page](./assets/imgs/kakao-payment-page.jpg)
 
+### Development with Parameter modification
+앞서 본 다음 파라미터를 수정하여 진행할 수도 있다.
+
+```js
+// set params
+const item_name = '초코파이';
+const quantity = 1;
+const total_amount = 2200;
+const vat_amount = 200;
+const tax_free_amount = 0;
+```
+
+여기서는 `serverless.yml`을 수정해 POST Request를 통해 파라미터를 받고, 이를 통해 파라미터의 값을 수정하는 방법을 보도록 하겠다.
+
+GET의 Body는 query string형태로 전송할 것이다. 이를 위해 아래와 같이 `serverless.yml`을 수정하고...
+
+```yml
+# ...
+
+functions:
+  payment:
+    handler: handler.payment
+    events:
+      - http:
+          path: /
+          method: get
+          request: # add
+            parameters:
+              querystrings:
+                url: true
+```
+
+다음과 같이 코드를 수정해보자
+
+```js
+module.exports.payment = async (evt) => {
+  // get parmas
+  console.log(evt.multiValueQueryStringParameters);
+
+  return {
+    statusCode: 200,
+    body: 'hello~',
+  };
+
+  /*
+  // set variables
+  const item_name = '초코파이';
+  const quantity = 1;
+  const total_amount = 2200;
+  const vat_amount = 200;
+  const tax_free_amount = 0;
+
+  const approval_url = 'http://example.com/success';
+  const fail_url = 'http://example.com/fail';
+  const cancel_url = 'http://example.com/cancel';
+
+  // set data
+  const data = [
+    'cid=TC0ONETIME',
+    'partner_order_id=partner_order_id',
+    'partner_user_id=partner_user_id',
+    `item_name=${item_name}`,
+    `quantity=${quantity}`,
+    `total_amount=${total_amount}`,
+    `vat_amount=${vat_amount}`,
+    `tax_free_amount=${tax_free_amount}`,
+    `approval_url=${approval_url}`,
+    `fail_url=${fail_url}`,
+    `cancel_url=${cancel_url}`
+  ].join('&'); // encode data (application/x-www-form-urlencoded)
+
+  // send request (kakao payment)
+  const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', data, {
+    headers: {
+      'Authorization': 'KakaoAK xxxxxxxxxx', // 'xxx...' = admin key
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  });
+
+  const pc_url = req.data.next_redirect_pc_url; // get pc url
+
+  const response = {
+    statusCode: 301, // redirect
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      Location: pc_url
+    },
+    body: ''
+  };
+
+  return response;
+  */
+}
+```
+
+그리고 다음과 같이 Request를 날리게 되면... 참고로 curl 날리기 어려우면 [curl tool](https://curlbuilder.com/) 또는 [postman](https://www.getpostman.com/)을 애용하자. (본인은 postman을 사용하고 있음)
+
+```sh
+$ curl -XGET 'http://localhost:3000/?item_name=초코파이&quantity=1&total_amount=2200&vat_amount=200&tax_free_amount=0'
+```
+
+serverless 콘솔에 다음과 같이 결과가 나타날 것이다.
+
+![get-result](./assets/imgs/get-result.png)
+
+참고로, 결과 화면이 꼭 같을 필요는 없다. 그냥 위와 같이 출력되기만 하면 된다. 참고로 한글이 깨져보이는 건 postman으로 날리면 정상적으로 나온다.
+
+![get-result-utf-8](./assets/imgs/get-result-utf-8.PNG)
+
+자 이제 다시 개발을 해 볼 시간. 다음과 같이 body로 받은 파라미터들을 사용할 수 있도록 코드를 변경해주자.
+
+```js
+module.exports.payment = async ({ multiValueQueryStringParameters: params }) => {
+  // get parmas
+  const {
+    item_name,
+    quanity,
+    total_amount,
+    vat_amount,
+    tasx_free,amount,
+  } = params;
+
+  /*
+  // set variables
+  const item_name = '초코파이';
+  const quantity = 1;
+  const total_amount = 2200;
+  const vat_amount = 200;
+  const tax_free_amount = 0;
+  */
+
+  const approval_url = 'http://example.com/success';
+  const fail_url = 'http://example.com/fail';
+  const cancel_url = 'http://example.com/cancel';
+
+  // set data
+  const data = [
+    'cid=TC0ONETIME',
+    'partner_order_id=partner_order_id',
+    'partner_user_id=partner_user_id',
+    `item_name=${item_name}`,
+    `quantity=${quantity}`,
+    `total_amount=${total_amount}`,
+    `vat_amount=${vat_amount}`,
+    `tax_free_amount=${tax_free_amount}`,
+    `approval_url=${approval_url}`,
+    `fail_url=${fail_url}`,
+    `cancel_url=${cancel_url}`
+  ].join('&'); // encode data (application/x-www-form-urlencoded)
+
+  // send request (kakao payment)
+  const req = await axios.post('https://kapi.kakao.com/v1/payment/ready', data, {
+    headers: {
+      'Authorization': 'KakaoAK xxxxxxxxx', // 'xxx...' = admin key
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  });
+
+  const pc_url = req.data.next_redirect_pc_url; // get pc url
+
+  const response = {
+    statusCode: 301, // redirect
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      Location: pc_url
+    },
+    body: ''
+  };
+
+  return response;
+}
+```
+
+개발 끝! 이제 원하는 방식으로 파라미터를 수정해 사용할 수가 있습니다.
+
 #### Watch out!
 개발 시 발생되었던 문제 또는 주의할 것들
 
 ##### application/x-www-form-urlencoded
-결제 요청 시 body는 `application/x-www-form-urlencoded` 콘텐츠 타입으로 보내야 하기 때문에, 다음과 같은 형식으로 body를 전송해야만 한다.
+결제 요청 시 body는 `application/x-www-form-urlencoded` 컨텐츠 타입으로 보내야 하기 때문에, 다음과 같은 형식으로 body를 전송해야만 한다.
 
 ```text
 cid=TC0ONETIME&partner_order_id=partner_order_id&partner_user_id=partner_user_id&item_name=초코파이&quantity=1&total_amount=2200&vat_amount=200&tax_free_amount=0&approval_url=http://example.com&fail_url=http://example.com&cancel_url=http://example.com

@@ -4,14 +4,24 @@
 
 const axios = require('axios'); // using 'axios' node module for HTTP request
 
-module.exports.payment = async () => { // meaning 'async' is 'asynchronous function'
+module.exports.payment = async ({ multiValueQueryStringParameters: params }) => {
+  // get parmas
+  const {
+    item_name,
+    quanity,
+    total_amount,
+    vat_amount,
+    tasx_free,amount,
+  } = params;
 
+  /*
   // set variables
   const item_name = '초코파이';
   const quantity = 1;
   const total_amount = 2200;
   const vat_amount = 200;
   const tax_free_amount = 0;
+  */
 
   const approval_url = 'http://example.com/success';
   const fail_url = 'http://example.com/fail';
@@ -54,4 +64,4 @@ module.exports.payment = async () => { // meaning 'async' is 'asynchronous funct
   };
 
   return response;
-};
+}
